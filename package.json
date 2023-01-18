@@ -1,0 +1,16 @@
+{
+  "name": "typescript-env-check",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "check": "npm run build && node dist/index.js examples/schema.json examples/app.env"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
