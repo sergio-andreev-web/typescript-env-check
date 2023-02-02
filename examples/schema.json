@@ -1,1 +1,6 @@
-{"PORT":"number","DEBUG":"boolean","APP_NAME":"string"}
+{
+  "PORT": "number",
+  "DEBUG": "boolean",
+  "APP_NAME": "string",
+  "SAMPLE_20230202": "string"
+}
