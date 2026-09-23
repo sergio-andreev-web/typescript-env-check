@@ -1,34 +1,32 @@
 import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { parseEnv } from './env.js';
+import { validate, type Schema } from './schema.js';
 
-type Rule = 'string' | 'number' | 'boolean';
-type Schema = Record<string, Rule>;
-
-export function parseEnv(text: string): Record<string, string> {
-  const values: Record<string, string> = {};
-  for (const line of text.split(/\r?\n/)) {
-    if (!line.trim() || line.trimStart().startsWith('#')) continue;
-    const split = line.indexOf('=');
-    if (split < 1) throw new Error(`Invalid env line: ${line}`);
-    values[line.slice(0, split).trim()] = line.slice(split + 1).trim();
+function main(args: string[]): number {
+  const json = args.includes('--json');
+  const strict = args.includes('--strict');
+  const paths = args.filter(arg => !arg.startsWith('--'));
+  if (paths.length !== 2) {
+    console.error('Usage: env-check <schema.json> <file.env> [--strict] [--json]');
+    return 2;
   }
-  return values;
-}
-
-export function validate(schema: Schema, values: Record<string, string>): string[] {
-  const errors: string[] = [];
-  for (const [key, rule] of Object.entries(schema)) {
-    const value = values[key];
-    if (value === undefined || value === '') errors.push(`${key}: missing`);
-    else if (rule === 'number' && !Number.isFinite(Number(value))) errors.push(`${key}: expected number`);
-    else if (rule === 'boolean' && !['true', 'false'].includes(value)) errors.push(`${key}: expected boolean`);
+  try {
+    const schema = JSON.parse(readFileSync(paths[0], 'utf8')) as Schema;
+    const values = parseEnv(readFileSync(paths[1], 'utf8'));
+    const result = validate(schema, values, strict);
+    if (json) console.log(JSON.stringify({ valid: result.errors.length === 0, errors: result.errors }, null, 2));
+    else if (result.errors.length) console.error(result.errors.join('\n'));
+    else console.log('Environment matches schema');
+    return result.errors.length ? 1 : 0;
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    return 1;
   }
-  return errors;
 }
 
-if (process.argv[1]?.endsWith('index.js')) {
-  const [schemaPath, envPath] = process.argv.slice(2);
-  if (!schemaPath || !envPath) throw new Error('Usage: node dist/index.js schema.json app.env');
-  const errors = validate(JSON.parse(readFileSync(schemaPath, 'utf8')) as Schema, parseEnv(readFileSync(envPath, 'utf8')));
-  if (errors.length) { console.error(errors.join('\n')); process.exitCode = 1; }
-  else console.log('Environment matches schema');
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  process.exitCode = main(process.argv.slice(2));
 }
+
+export { main };

@@ -1,5 +1,3 @@
 # TypeScript Env Check
 
-Checks a `.env` file against a JSON schema of required string, number, and boolean keys.
-
-Run `npm install && npm run check`.
+Validate `.env` values against a JSON schema. Run `npm install && npm run check`; test with `npm test`.

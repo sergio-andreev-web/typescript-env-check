@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "check": "npm run build && node dist/index.js examples/schema.json examples/app.env"
+    "check": "npm run build && node dist/index.js examples/schema.json examples/app.env",
+    "test": "npm run build && node --test dist/*.test.js"
   },
   "devDependencies": {
     "typescript": "^7.0.2",
