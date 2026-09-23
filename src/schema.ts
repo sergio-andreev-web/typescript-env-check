@@ -1,6 +1,7 @@
+import { getRule } from './rules/index.js';
 import type { EnvValues } from './env.js';
 
-export type ValueType = 'string' | 'number' | 'boolean';
+export type ValueType = string;
 export type Rule = ValueType | {
   type: ValueType;
   required?: boolean;
@@ -25,7 +26,7 @@ export function validate(schema: Schema, input: EnvValues, strict = false): Vali
   }
   for (const [key, rawRule] of Object.entries(schema)) {
     const rule = toRule(rawRule);
-    if (!rule || !['string', 'number', 'boolean'].includes(rule.type)) {
+    if (!rule || !['string', 'number', 'boolean'].includes(rule.type) && !getRule(rule.type)) {
       errors.push(`${key}: invalid schema rule`);
       continue;
     }
@@ -43,6 +44,8 @@ export function validate(schema: Schema, input: EnvValues, strict = false): Vali
       errors.push(`${key}: expected boolean`);
       continue;
     }
+    const specialRule = getRule(rule.type);
+    if (specialRule && !specialRule.validate(value)) errors.push(`${key}: invalid ${rule.type}`);
     if (rule.enum && !rule.enum.includes(value)) errors.push(`${key}: not in allowed values`);
     if (rule.min !== undefined) {
       const actual = rule.type === 'number' ? Number(value) : value.length;
